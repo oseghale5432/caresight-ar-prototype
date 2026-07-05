@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Sparkles, ShieldAlert, Volume2, VolumeX, Settings, X, Shield, MessageCircleQuestion, Mic, Send, Lock } from 'lucide-react';
 import Avatar3D from './components/Avatar3D';
+import LandingPage from './components/LandingPage';
 
 function App() {
+  // Application Flow
+  const [showLandingPage, setShowLandingPage] = useState(true);
+
   const [hasPermission, setHasPermission] = useState(false);
   const [loading, setLoading] = useState(false);
   const [aiStatus, setAiStatus] = useState("Ready to scan");
@@ -44,6 +48,24 @@ function App() {
     const savedRules = localStorage.getItem('caresight_safety_rules');
     if (savedRules) setCustomSafetyRules(savedRules);
 
+    const handleStart = () => setIsSpeaking(true);
+    const handleEnd = () => setIsSpeaking(false);
+    window.addEventListener('ai_speaking_start', handleStart);
+    window.addEventListener('ai_speaking_end', handleEnd);
+    
+    return () => {
+      window.removeEventListener('ai_speaking_start', handleStart);
+      window.removeEventListener('ai_speaking_end', handleEnd);
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Start Camera only after landing page finishes
+  useEffect(() => {
+    if (showLandingPage) return;
+
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -61,20 +83,7 @@ function App() {
     };
     
     startCamera();
-    
-    const handleStart = () => setIsSpeaking(true);
-    const handleEnd = () => setIsSpeaking(false);
-    window.addEventListener('ai_speaking_start', handleStart);
-    window.addEventListener('ai_speaking_end', handleEnd);
-    
-    return () => {
-      window.removeEventListener('ai_speaking_start', handleStart);
-      window.removeEventListener('ai_speaking_end', handleEnd);
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+  }, [showLandingPage]);
 
   const handlePinSubmit = (e) => {
     e.preventDefault();
@@ -276,6 +285,10 @@ function App() {
   return (
     <div className="app-container" style={{ background: '#000' }}>
       
+      {showLandingPage && (
+        <LandingPage onComplete={() => setShowLandingPage(false)} />
+      )}
+
       {/* Live AR Camera Feed */}
       <video 
         ref={videoRef}

@@ -1135,3 +1135,26 @@ button, input, textarea, select {
     border-color: var(--color-danger);
   }
 }
+
+/* Landing Page Styles */
+.animated-bg {
+  background: linear-gradient(-45deg, #0a0a0a, #1a2a40, #004d40, #0a0a0a);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.glass-button:hover {
+  background: rgba(255,255,255,0.25) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 229, 255, 0.4) !important;
+}
+
+.glass-button:active {
+  transform: translateY(1px);
+}
