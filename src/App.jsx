@@ -13,7 +13,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [pinInput, setPinInput] = useState("");
-  const [geminiKey, setGeminiKey] = useState('');
+  
+  // API Key via Environment Variable or Admin Panel
+  const [geminiKey, setGeminiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || '');
   const [customSafetyRules, setCustomSafetyRules] = useState('');
   
   // Custom Question Modal
@@ -33,9 +35,11 @@ function App() {
       window.speechSynthesis.getVoices();
     };
     
-    // Load saved settings
+    // Check if they overrode the key in local storage, otherwise fallback to hardcoded
     const savedKey = localStorage.getItem('caresight_gemini_key');
-    if (savedKey) setGeminiKey(savedKey);
+    if (savedKey && savedKey.trim() !== '') {
+      setGeminiKey(savedKey);
+    }
     
     const savedRules = localStorage.getItem('caresight_safety_rules');
     if (savedRules) setCustomSafetyRules(savedRules);
