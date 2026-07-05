@@ -1,0 +1,157 @@
+{
+  "hospitalName": "CareSight General Hospital",
+  "roomNumber": "101",
+  "equipment": [
+    {
+      "id": "patient-monitor",
+      "name": "Patient Monitor",
+      "category": "Equipment",
+      "description": "Monitors vital signs such as heart rate, oxygen saturation, temperature, and blood pressure in real-time.",
+      "safetyNote": "If the screen flashes red, sounds a continuous alarm, or is blank, do not touch the monitor. Inform a nurse immediately.",
+      "instructions": [
+        "Tracks heart rate (green), blood pressure (yellow), and oxygen level (blue).",
+        "Sensors are attached via sticky pads or finger clips.",
+        "Alarms notify nursing staff of sudden changes."
+      ],
+      "escalationGuidance": "For issues with the monitor beeping, contact nursing staff using your physical call button."
+    },
+    {
+      "id": "iv-pump",
+      "name": "IV Pole & Pump",
+      "category": "Equipment",
+      "description": "Electronically delivers precise amounts of fluids, nutrients, or medications into the patient's bloodstream.",
+      "safetyNote": "Do not adjust the screen or press any buttons. Call a nurse if the pump sounds an alarm or if you see air in the tubing.",
+      "instructions": [
+        "Plugs into wall power but has a backup battery for short movements.",
+        "Tubing runs from fluid bags through the pump to the patient's arm or line.",
+        "Programmed strictly by authorized clinical staff."
+      ],
+      "escalationGuidance": "Never attempt to silence or adjust the IV pump yourself. Press the call light if the pump is beeping or flashing an alarm."
+    },
+    {
+      "id": "call-light",
+      "name": "Bedside Call Light",
+      "category": "Safety",
+      "description": "Your direct link to the nursing station. Pressing the large red button sends an alert to your care team.",
+      "safetyNote": "Keep the call light within reach at all times. Do not wrap the cord around bed rails where it could get caught or damaged.",
+      "instructions": [
+        "Press the red button in the center to call a nurse.",
+        "Use the secondary buttons on the remote to control the TV or room lights.",
+        "A light outside your room will illuminate to show staff that help is requested."
+      ],
+      "escalationGuidance": "Always press the physical red button on this remote for any urgent needs or clinical help. Do not rely on digital devices in an emergency."
+    },
+    {
+      "id": "oxygen-flowmeter",
+      "name": "Oxygen Flowmeter",
+      "category": "Equipment",
+      "description": "Regulates the flow of medical oxygen delivered to the patient via a nasal cannula or face mask.",
+      "safetyNote": "Oxygen is a severe fire hazard. Never adjust the dial yourself. Ensure no open flames, sparks, or smoking occur near this equipment.",
+      "instructions": [
+        "Connected directly to the hospital's central oxygen supply.",
+        "The black dial controls the flow rate in liters per minute (L/min).",
+        "Must only be adjusted under order from a physician."
+      ],
+      "escalationGuidance": "If the mask or nasal cannula is slipping, or if you feel you are not getting enough air, press your call button immediately."
+    },
+    {
+      "id": "bed-controls",
+      "name": "Bed Controls & Railing",
+      "category": "Safety",
+      "description": "Controls for adjusting the height, headrest, and footrest of the patient's bed, integrated into the bed rails.",
+      "safetyNote": "Keep the bed in the lowest position when sleeping or resting to reduce fall risks. Keep side rails up unless advised otherwise.",
+      "instructions": [
+        "Use the buttons on the inner side rail to sit up or raise your feet.",
+        "Outer rail buttons are for caregivers only.",
+        "Ask for help before getting out of bed if you feel dizzy or weak."
+      ],
+      "escalationGuidance": "If the bed fails to move, is stuck, or if you feel unsafe getting up, use your call light to request help."
+    },
+    {
+      "id": "overbed-table",
+      "name": "Overbed Table",
+      "category": "Equipment",
+      "description": "A height-adjustable mobile surface designed for meals, personal items, and writing.",
+      "safetyNote": "Do not lean or sit on the table. It is on wheels and could slide, causing a fall. Ensure wheels are locked when eating.",
+      "instructions": [
+        "Squeeze the lever under the tabletop to adjust height.",
+        "Keep personal electronics and drinks away from edge.",
+        "Sanitized daily by environmental services."
+      ],
+      "escalationGuidance": "If the table is stuck or too far to reach, ask a visitor or use the call light to have a staff member adjust it."
+    },
+    {
+      "id": "sharps-container",
+      "name": "Sharps Disposal Container",
+      "category": "Safety",
+      "description": "A puncture-resistant, wall-mounted biohazard box for the safe disposal of needles, syringes, lancets, and other sharp tools.",
+      "safetyNote": "Never touch, inspect, or place hands near the opening of this container. Doing so carries risk of needle stick and infection.",
+      "instructions": [
+        "Strictly for medical staff use.",
+        "Color-coded red or yellow to indicate biohazard risk.",
+        "Always locked to prevent access."
+      ],
+      "escalationGuidance": "If you notice a needle or syringe left out on a counter or in your bed, do not touch it. Press your call light for immediate cleanup."
+    },
+    {
+      "id": "hand-sanitizer",
+      "name": "Hand Sanitizer Dispenser",
+      "category": "Safety",
+      "description": "Wall-mounted alcohol-based hand sanitizer dispenser for clean hygiene at the bedside.",
+      "safetyNote": "Avoid contact with eyes. Sanitizer is flammable; keep away from open flames or oxygen outlets. Rub hands until completely dry.",
+      "instructions": [
+        "Place hands underneath for automatic or manual soap dispensing.",
+        "Visitors and staff must sanitize hands when entering and exiting the room.",
+        "Reduces spread of hospital-acquired infections."
+      ],
+      "escalationGuidance": "If the dispenser is empty, please inform the staff when they enter so it can be refilled."
+    }
+  ],
+  "medicationFAQs": [
+    {
+      "id": "aspirin",
+      "name": "Aspirin (81mg)",
+      "purpose": "A low-dose blood thinner given daily to help prevent heart attacks or blood clots.",
+      "sideEffects": "Easy bruising, stomach irritation, or mild bleeding.",
+      "instructions": "Take with water. Report any black, tarry stools or unexplained nosebleeds."
+    },
+    {
+      "id": "heparin",
+      "name": "Heparin (Injection)",
+      "purpose": "A fast-acting anticoagulant (blood thinner) to treat or prevent deep vein blood clots.",
+      "sideEffects": "Bruising at injection site, bleeding gums, prolonged bleeding from cuts.",
+      "instructions": "Usually injected under the skin (subcutaneous) in the abdomen by a nurse."
+    },
+    {
+      "id": "saline",
+      "name": "Normal Saline (IV Fluids)",
+      "purpose": "A sterile salt-water solution used to hydrate the body and maintain blood pressure.",
+      "sideEffects": "Swelling in hands/ankles, increased urination.",
+      "instructions": "Administered via IV pump. Alert staff if the site swells or feels sore."
+    }
+  ],
+  "faq": [
+    {
+      "question": "Can I get out of bed on my own?",
+      "answer": "If you are designated as a 'fall risk' or feel weak, dizzy, or have had surgery, please do not get up alone. Always press your call light to have a nurse assist you."
+    },
+    {
+      "question": "Why is my monitor alarm constantly beeping?",
+      "answer": "Monitor alarms sound for various reasons: a loose sticky pad, a disconnected finger sensor, or a change in your vitals. Our staff monitors these centrally. If an alarm sounds continuously, press your call light."
+    },
+    {
+      "question": "Can my family touch the medical equipment?",
+      "answer": "No. For patient safety, family and visitors must never adjust, mute, or touch any medical equipment, dials, or IV pumps."
+    },
+    {
+      "question": "Who do I contact if I am in pain?",
+      "answer": "Please press the physical red button on your bedside call light. A nurse will be notified and will assist you with pain management."
+    }
+  ],
+  "aiGuidelines": {
+    "systemPrompt": "You are CareSight, a helpful, friendly, and non-diagnostic digital bedside guide for hospital patients. Your goal is to explain room safety, equipment, and general FAQs using only the pre-approved hospital library. \n\nCRITICAL SAFETY RULES:\n1. You are strictly prohibited from prescribing, diagnosing, suggesting treatment changes, or interpreting active vital sign numbers.\n2. If the user asks about pain, severe symptoms (chest pain, shortness of breath, dizziness), medication dosage adjustments, or requests medical advice, you MUST trigger an ESCALATION protocol. Reply with: 'I am unable to provide clinical advice. Please press the physical red button on your bedside Call Light immediately to contact your care team.'\n3. Keep your language simple, reassuring, and clear. Avoid complex jargon. Always remind the patient that their nurse is available via the Call Light.",
+    "escalationKeywords": [
+      "chest pain", "shortness of breath", "dizzy", "headache", "pain", "hurt", "bleeding", "vomit", "sick", "dose", "dosage", "change medication", "prescribe", "pill", "diagnose", "what is wrong with me", "heart attack", "choking", "seizure", "emergency"
+    ]
+  }
+}
