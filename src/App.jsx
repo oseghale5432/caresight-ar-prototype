@@ -6,6 +6,7 @@ import LandingPage from './components/LandingPage';
 function App() {
   // Application Flow
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [activeMode, setActiveMode] = useState('identify'); // Tracks which option is focused
 
   const [hasPermission, setHasPermission] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,10 +40,6 @@ function App() {
     window.speechSynthesis.onvoiceschanged = () => {
       window.speechSynthesis.getVoices();
     };
-    
-    // Load Admin Settings
-    const savedKey = localStorage.getItem('caresight_gemini_key');
-    if (savedKey && savedKey.trim() !== '') setGeminiKey(savedKey);
     
     const savedRules = localStorage.getItem('caresight_safety_rules');
     if (savedRules) setCustomSafetyRules(savedRules);
@@ -99,7 +96,6 @@ function App() {
   };
 
   const saveSettings = () => {
-    localStorage.setItem('caresight_gemini_key', geminiKey);
     localStorage.setItem('caresight_safety_rules', customSafetyRules);
     localStorage.setItem('caresight_allowed_meds', allowedMedications);
     setShowSettings(false);
@@ -174,6 +170,7 @@ function App() {
   };
 
   const handleRoomSafety = () => {
+    setActiveMode('safety');
     window.speechSynthesis.cancel();
     setAiStatus("Safety Guidelines");
     
@@ -192,6 +189,7 @@ function App() {
 
   // 📸 standard equipment capture
   const handleCapture = async (promptText = "Identify the hospital equipment visible in this image. Explain what it is and what it does in simple, comforting terms (max 2 sentences).") => {
+    setActiveMode('identify');
     if (!videoRef.current || !canvasRef.current || loading) return;
     
     if (!geminiKey || geminiKey.trim().length < 10) {
@@ -218,6 +216,7 @@ function App() {
 
   // 💊 new medication verification capture
   const handleMedicationCapture = async () => {
+    setActiveMode('medication');
     if (!videoRef.current || !canvasRef.current || loading) return;
     
     if (!geminiKey || geminiKey.trim().length < 10) {
@@ -321,6 +320,33 @@ function App() {
   const toggleVoice = () => {
     setVoiceEnabled(!voiceEnabled);
     if (voiceEnabled) window.speechSynthesis.cancel();
+  };
+
+  // Helper function to dynamically generate button styles based on active state
+  const getButtonStyles = (modeName) => {
+    const isActive = activeMode === modeName;
+    return {
+      width: isActive ? '70px' : '55px',
+      height: isActive ? '70px' : '55px',
+      borderRadius: '50%',
+      background: isActive 
+        ? 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' 
+        : 'rgba(255,255,255,0.1)',
+      backdropFilter: isActive ? 'none' : 'blur(10px)',
+      border: isActive ? '3px solid white' : '1px solid rgba(255,255,255,0.2)',
+      boxShadow: isActive ? '0 0 20px rgba(0, 229, 255, 0.4)' : 'none',
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      cursor: 'pointer',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      transform: (loading && isActive) ? 'scale(0.95)' : 'scale(1)',
+      marginTop: isActive ? '-10px' : '0' // Pops the active button up slightly
+    };
+  };
+
+  const getIconColor = (modeName, defaultColor) => {
+    return activeMode === modeName ? 'white' : defaultColor;
   };
 
   return (
@@ -490,26 +516,23 @@ function App() {
 
         <div style={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-end', // Aligns buttons to the bottom so the larger one pops up
           justifyContent: 'space-between',
           width: '100%',
           maxWidth: '360px',
-          gap: '8px' // ensure they don't squish on tiny screens
+          gap: '8px',
+          height: '80px' // Provides room for the 70px active button
         }}>
           
           {/* 1. Room Safety Button */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '60px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '70px' }}>
             <button
               onClick={handleRoomSafety}
-              style={{
-                width: '55px', height: '55px', borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer'
-              }}
+              style={getButtonStyles('safety')}
             >
-              <Shield size={22} color="var(--color-secondary)" />
+              <Shield size={activeMode === 'safety' ? 28 : 22} color={getIconColor('safety', 'var(--color-secondary)')} />
             </button>
-            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: '600' }}>Safety</span>
+            <span style={{ color: activeMode === 'safety' ? 'white' : 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: '600', transition: 'all 0.3s' }}>Safety</span>
           </div>
 
           {/* 2. Main Capture/Identify Button */}
@@ -517,50 +540,34 @@ function App() {
             <button
               onClick={() => handleCapture()}
               disabled={!hasPermission || loading}
-              style={{
-                width: '70px', height: '70px', borderRadius: '50%',
-                background: loading ? 'var(--bg-surface)' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-                border: '3px solid white', boxShadow: '0 0 20px rgba(0, 229, 255, 0.4)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: hasPermission && !loading ? 'pointer' : 'not-allowed',
-                transition: 'transform 0.2s', transform: loading ? 'scale(0.95)' : 'scale(1)',
-                marginTop: '-10px' // pop it up slightly to emphasize it
-              }}
+              style={{ ...getButtonStyles('identify'), cursor: hasPermission && !loading ? 'pointer' : 'not-allowed' }}
             >
-              <Camera size={28} color="white" />
+              <Camera size={activeMode === 'identify' ? 28 : 22} color={getIconColor('identify', 'white')} />
             </button>
-            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.8rem', fontWeight: '600' }}>Identify</span>
+            <span style={{ color: activeMode === 'identify' ? 'white' : 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: '600', transition: 'all 0.3s' }}>Identify</span>
           </div>
 
           {/* 3. Medication Verification Button */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '60px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '70px' }}>
             <button
               onClick={() => handleMedicationCapture()}
               disabled={!hasPermission || loading}
-              style={{
-                width: '55px', height: '55px', borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer'
-              }}
+              style={{ ...getButtonStyles('medication'), cursor: hasPermission && !loading ? 'pointer' : 'not-allowed' }}
             >
-              <Pill size={22} color="#ffb74d" />
+              <Pill size={activeMode === 'medication' ? 28 : 22} color={getIconColor('medication', '#ffb74d')} />
             </button>
-            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: '600' }}>Meds</span>
+            <span style={{ color: activeMode === 'medication' ? 'white' : 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: '600', transition: 'all 0.3s' }}>Meds</span>
           </div>
 
           {/* 4. Ask Question Button */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '60px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '70px' }}>
             <button
-              onClick={() => { setCustomQuestion(""); setShowAskModal(true); }}
-              style={{
-                width: '55px', height: '55px', borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer'
-              }}
+              onClick={() => { setActiveMode('ask'); setCustomQuestion(""); setShowAskModal(true); }}
+              style={getButtonStyles('ask')}
             >
-              <MessageCircleQuestion size={22} color="var(--color-primary)" />
+              <MessageCircleQuestion size={activeMode === 'ask' ? 28 : 22} color={getIconColor('ask', 'var(--color-primary)')} />
             </button>
-            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: '600' }}>Ask AI</span>
+            <span style={{ color: activeMode === 'ask' ? 'white' : 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: '600', transition: 'all 0.3s' }}>Ask AI</span>
           </div>
 
         </div>
@@ -654,17 +661,6 @@ function App() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', animation: 'fade-in 0.3s' }}>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: '600' }}>Google Gemini API Key</label>
-                  <input 
-                    type="password"
-                    value={geminiKey}
-                    onChange={(e) => setGeminiKey(e.target.value)}
-                    placeholder="Paste API Key here..."
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-base)', color: 'white', fontSize: '0.9rem' }}
-                  />
-                </div>
-
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: '600' }}>Allowed Medications for this Room</label>
                   <textarea 
