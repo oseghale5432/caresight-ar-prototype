@@ -388,7 +388,7 @@ function App() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-primary)' }}>CareSight Guide</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '0.75rem', color: '#e2e8f0' }}>
               {loading ? "Thinking..." : aiStatus}
             </span>
           </div>
@@ -591,7 +591,7 @@ function App() {
             >
               <Mic size={36} />
             </button>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            <p style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>
               {isRecording ? "Listening..." : "Tap to speak your question"}
             </p>
 
@@ -641,7 +641,7 @@ function App() {
             
             {!isAdminUnlocked ? (
               <form onSubmit={handlePinSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Please enter the Admin PIN to access these settings.</p>
+                <p style={{ color: '#e2e8f0', fontSize: '0.9rem' }}>Please enter the Admin PIN to access these settings.</p>
                 <input 
                   type="password" 
                   value={pinInput} 
@@ -655,7 +655,7 @@ function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', animation: 'fade-in 0.3s' }}>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Google Gemini API Key</label>
+                  <label style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: '600' }}>Google Gemini API Key</label>
                   <input 
                     type="password"
                     value={geminiKey}
@@ -666,7 +666,7 @@ function App() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Allowed Medications for this Room</label>
+                  <label style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: '600' }}>Allowed Medications for this Room</label>
                   <textarea 
                     value={allowedMedications}
                     onChange={(e) => setAllowedMedications(e.target.value)}
@@ -677,7 +677,7 @@ function App() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Custom Room Safety Instructions</label>
+                  <label style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: '600' }}>Custom Room Safety Instructions</label>
                   <textarea 
                     value={customSafetyRules}
                     onChange={(e) => setCustomSafetyRules(e.target.value)}
