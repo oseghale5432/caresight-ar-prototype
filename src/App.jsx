@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Sparkles, ShieldAlert, Volume2, VolumeX, Settings, X, Shield, MessageCircleQuestion, Mic, Send, Lock } from 'lucide-react';
+import { Camera, Sparkles, ShieldAlert, Volume2, VolumeX, Settings, X, Shield, MessageCircleQuestion, Mic, Send, Lock, Pill } from 'lucide-react';
 import Avatar3D from './components/Avatar3D';
 import LandingPage from './components/LandingPage';
 
@@ -21,6 +21,7 @@ function App() {
   // API Key via Environment Variable or Admin Panel
   const [geminiKey, setGeminiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || '');
   const [customSafetyRules, setCustomSafetyRules] = useState('');
+  const [allowedMedications, setAllowedMedications] = useState('');
   
   // Custom Question Modal
   const [showAskModal, setShowAskModal] = useState(false);
@@ -39,14 +40,15 @@ function App() {
       window.speechSynthesis.getVoices();
     };
     
-    // Check if they overrode the key in local storage, otherwise fallback to hardcoded
+    // Load Admin Settings
     const savedKey = localStorage.getItem('caresight_gemini_key');
-    if (savedKey && savedKey.trim() !== '') {
-      setGeminiKey(savedKey);
-    }
+    if (savedKey && savedKey.trim() !== '') setGeminiKey(savedKey);
     
     const savedRules = localStorage.getItem('caresight_safety_rules');
     if (savedRules) setCustomSafetyRules(savedRules);
+
+    const savedMeds = localStorage.getItem('caresight_allowed_meds');
+    if (savedMeds) setAllowedMedications(savedMeds);
 
     const handleStart = () => setIsSpeaking(true);
     const handleEnd = () => setIsSpeaking(false);
@@ -75,7 +77,7 @@ function App() {
           videoRef.current.srcObject = stream;
         }
         setHasPermission(true);
-        speakText("Welcome to CareSight. Point your camera at any hospital equipment and tap capture, or ask a question.");
+        speakText("Welcome to CareSight. Point your camera at any hospital equipment or medication to begin.");
       } catch (err) {
         console.error("Camera access denied:", err);
         setAiStatus("Camera access required for AR vision.");
@@ -99,6 +101,7 @@ function App() {
   const saveSettings = () => {
     localStorage.setItem('caresight_gemini_key', geminiKey);
     localStorage.setItem('caresight_safety_rules', customSafetyRules);
+    localStorage.setItem('caresight_allowed_meds', allowedMedications);
     setShowSettings(false);
     setIsAdminUnlocked(false); // Relock for security
   };
@@ -187,6 +190,7 @@ function App() {
     handleCapture(customQuestion || "What is in this image?");
   };
 
+  // 📸 standard equipment capture
   const handleCapture = async (promptText = "Identify the hospital equipment visible in this image. Explain what it is and what it does in simple, comforting terms (max 2 sentences).") => {
     if (!videoRef.current || !canvasRef.current || loading) return;
     
@@ -212,12 +216,49 @@ function App() {
     await analyzeImageWithGemini(base64Image, promptText);
   };
 
-  const analyzeImageWithGemini = async (base64Image, promptText) => {
+  // 💊 new medication verification capture
+  const handleMedicationCapture = async () => {
+    if (!videoRef.current || !canvasRef.current || loading) return;
+    
+    if (!geminiKey || geminiKey.trim().length < 10) {
+      setShowSettings(true);
+      speakText("Please ask your care provider to configure the system API key in the admin panel.");
+      return;
+    }
+
+    setLoading(true);
+    setAiStatus("Verifying medication...");
+    window.speechSynthesis.cancel();
+    setIsSpeaking(true); 
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const base64Image = canvas.toDataURL('image/jpeg', 0.6);
+
+    const medsPrompt = `You are CareSight, a highly accurate medical verification AI. 
+    You are looking at an image of a medication. 
+    The authorized medications for this specific room are: ${allowedMedications || "None listed by admin"}.
+    CRITICAL RULE 1: Analyze the text and labels on the medication in this image.
+    CRITICAL RULE 2: Compare the recognized medication to the authorized list.
+    CRITICAL RULE 3: If it matches, confirm it is authorized. If it DOES NOT MATCH, trigger an immediate warning stating the medication is NOT authorized for this room!
+    CRITICAL RULE 4: Always end your response with EXACTLY this disclaimer: "This is an AI verification. Please confirm with your human nurse."
+    CRITICAL RULE 5: Keep your response under 3 sentences.`;
+
+    const userPrompt = "Analyze this medication and verify if it is on the authorized list.";
+    await analyzeImageWithGemini(base64Image, userPrompt, medsPrompt);
+  };
+
+  const analyzeImageWithGemini = async (base64Image, promptText, customSystemPrompt = null) => {
     try {
       const rawBase64 = base64Image.split(',')[1];
 
-      // Strict Medical Guardrails in System Prompt
-      const strictSystemInstruction = `You are CareSight, a helpful virtual bedside nurse guide for hospital patients. 
+      // Default Strict Medical Guardrails for general inquiries
+      const defaultSystemInstruction = `You are CareSight, a helpful virtual bedside nurse guide for hospital patients. 
       CRITICAL RULE 1: NEVER provide medical advice, diagnoses, or medication recommendations. 
       CRITICAL RULE 2: If the user asks a health-related question, asks for symptom advice, or tries to take their health into their own hands, you MUST rigidly refuse and respond EXACTLY with: "I cannot provide medical advice. Please press your call button to speak with your doctor or nurse."
       CRITICAL RULE 3: If you do not see any hospital equipment, politely state you don't recognize any equipment in the view. 
@@ -225,7 +266,7 @@ function App() {
 
       const payload = {
         systemInstruction: {
-          parts: [{ text: strictSystemInstruction }]
+          parts: [{ text: customSystemPrompt || defaultSystemInstruction }]
         },
         contents: [
           {
@@ -302,7 +343,7 @@ function App() {
           height: '100%',
           objectFit: 'cover',
           zIndex: 1,
-          opacity: hasPermission ? 1 : 0,
+          opacity: hasPermission && !showLandingPage ? 1 : 0,
           transition: 'opacity 0.5s'
         }}
       />
@@ -402,7 +443,7 @@ function App() {
       {isSpeaking && spokenText && (
         <div style={{
           position: 'absolute',
-          bottom: '160px', 
+          bottom: '140px', 
           left: '20px',
           right: '20px',
           background: 'rgba(20, 26, 38, 0.85)',
@@ -427,21 +468,21 @@ function App() {
         </div>
       )}
 
-      {/* Bottom Action Bar */}
+      {/* Bottom Action Bar (4 Buttons) */}
       <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        padding: '0 24px 40px',
+        padding: '0 20px 30px',
         zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '24px'
+        gap: '16px'
       }}>
         
-        {!hasPermission && (
+        {!hasPermission && !showLandingPage && (
           <div style={{ background: 'rgba(255,50,50,0.2)', padding: '12px 16px', borderRadius: '8px', border: '1px solid #ff4d4d', color: 'white', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldAlert size={16} /> Camera permission is required
           </div>
@@ -452,52 +493,76 @@ function App() {
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
-          maxWidth: '320px'
+          maxWidth: '360px',
+          gap: '8px' // ensure they don't squish on tiny screens
         }}>
-          <button
-            onClick={handleRoomSafety}
-            style={{
-              width: '60px', height: '60px', borderRadius: '50%',
-              background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', gap: '4px'
-            }}
-          >
-            <Shield size={24} color="var(--color-secondary)" />
-          </button>
+          
+          {/* 1. Room Safety Button */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '60px' }}>
+            <button
+              onClick={handleRoomSafety}
+              style={{
+                width: '55px', height: '55px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer'
+              }}
+            >
+              <Shield size={22} color="var(--color-secondary)" />
+            </button>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: '600' }}>Safety</span>
+          </div>
 
-          <button
-            onClick={() => handleCapture()}
-            disabled={!hasPermission || loading}
-            style={{
-              width: '80px', height: '80px', borderRadius: '50%',
-              background: loading ? 'var(--bg-surface)' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-              border: '4px solid white', boxShadow: '0 0 20px rgba(0, 229, 255, 0.4)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: hasPermission && !loading ? 'pointer' : 'not-allowed',
-              transition: 'transform 0.2s', transform: loading ? 'scale(0.95)' : 'scale(1)'
-            }}
-          >
-            <Camera size={32} color="white" />
-          </button>
+          {/* 2. Main Capture/Identify Button */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '70px' }}>
+            <button
+              onClick={() => handleCapture()}
+              disabled={!hasPermission || loading}
+              style={{
+                width: '70px', height: '70px', borderRadius: '50%',
+                background: loading ? 'var(--bg-surface)' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+                border: '3px solid white', boxShadow: '0 0 20px rgba(0, 229, 255, 0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: hasPermission && !loading ? 'pointer' : 'not-allowed',
+                transition: 'transform 0.2s', transform: loading ? 'scale(0.95)' : 'scale(1)',
+                marginTop: '-10px' // pop it up slightly to emphasize it
+              }}
+            >
+              <Camera size={28} color="white" />
+            </button>
+            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.8rem', fontWeight: '600' }}>Identify</span>
+          </div>
 
-          <button
-            onClick={() => { setCustomQuestion(""); setShowAskModal(true); }}
-            style={{
-              width: '60px', height: '60px', borderRadius: '50%',
-              background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', gap: '4px'
-            }}
-          >
-            <MessageCircleQuestion size={24} color="var(--color-primary)" />
-          </button>
-        </div>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '320px', padding: '0 10px' }}>
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: '600', textAlign: 'center', width: '60px' }}>Safety</span>
-          <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.85rem', fontWeight: '600', textAlign: 'center' }}>{loading ? "Analyzing..." : "Identify"}</span>
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: '600', textAlign: 'center', width: '60px' }}>Ask AI</span>
+          {/* 3. Medication Verification Button */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '60px' }}>
+            <button
+              onClick={() => handleMedicationCapture()}
+              disabled={!hasPermission || loading}
+              style={{
+                width: '55px', height: '55px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer'
+              }}
+            >
+              <Pill size={22} color="#ffb74d" />
+            </button>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: '600' }}>Meds</span>
+          </div>
+
+          {/* 4. Ask Question Button */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '60px' }}>
+            <button
+              onClick={() => { setCustomQuestion(""); setShowAskModal(true); }}
+              style={{
+                width: '55px', height: '55px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer'
+              }}
+            >
+              <MessageCircleQuestion size={22} color="var(--color-primary)" />
+            </button>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: '600' }}>Ask AI</span>
+          </div>
+
         </div>
       </div>
 
@@ -601,12 +666,23 @@ function App() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Allowed Medications for this Room</label>
+                  <textarea 
+                    value={allowedMedications}
+                    onChange={(e) => setAllowedMedications(e.target.value)}
+                    placeholder="e.g. Aspirin, Saline IV, Penicillin. The AI will verify scanned meds against this list."
+                    rows={4}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-base)', color: 'white', fontSize: '0.9rem', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Custom Room Safety Instructions</label>
                   <textarea 
                     value={customSafetyRules}
                     onChange={(e) => setCustomSafetyRules(e.target.value)}
                     placeholder="Enter the safety rules you want the AI to read to the patient when they tap the shield button..."
-                    rows={6}
+                    rows={4}
                     style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-base)', color: 'white', fontSize: '0.9rem', resize: 'vertical' }}
                   />
                 </div>
