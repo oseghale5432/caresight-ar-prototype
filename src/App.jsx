@@ -315,11 +315,11 @@ function App() {
 
       let data;
       try {
-        data = await tryFetch('gemini-flash-latest');
+        data = await tryFetch('gemini-3.5-flash');
       } catch (err) {
         if (err.message === 'HIGH_DEMAND') {
-          console.warn("Flash model overloaded. Falling back to Pro model cluster...");
-          data = await tryFetch('gemini-pro-latest');
+          console.warn("Flash model overloaded. Falling back to Flash-Lite cluster...");
+          data = await tryFetch('gemini-flash-lite-latest');
         } else {
           throw err;
         }
