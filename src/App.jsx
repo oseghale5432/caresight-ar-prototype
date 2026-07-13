@@ -187,6 +187,31 @@ function App() {
     handleCapture(customQuestion || "What is in this image?");
   };
 
+  const captureOptimizedImage = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return null;
+
+    const MAX_DIMENSION = 640;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+    
+    if (width > height && width > MAX_DIMENSION) {
+      height = Math.round((height * MAX_DIMENSION) / width);
+      width = MAX_DIMENSION;
+    } else if (height > MAX_DIMENSION) {
+      width = Math.round((width * MAX_DIMENSION) / height);
+      height = MAX_DIMENSION;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, width, height);
+    
+    return canvas.toDataURL('image/jpeg', 0.5);
+  };
+
   // 📸 standard equipment capture
   const handleCapture = async (promptText = "Identify the hospital equipment visible in this image. Explain what it is and what it does in simple, comforting terms (max 2 sentences).") => {
     setActiveMode('identify');
@@ -203,14 +228,9 @@ function App() {
     window.speechSynthesis.cancel();
     setIsSpeaking(true); 
     
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base64Image = captureOptimizedImage();
+    if (!base64Image) return;
     
-    const base64Image = canvas.toDataURL('image/jpeg', 0.6);
     await analyzeImageWithGemini(base64Image, promptText);
   };
 
@@ -230,14 +250,8 @@ function App() {
     window.speechSynthesis.cancel();
     setIsSpeaking(true); 
     
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    const base64Image = canvas.toDataURL('image/jpeg', 0.6);
+    const base64Image = captureOptimizedImage();
+    if (!base64Image) return;
 
     const medsPrompt = `You are CareSight, a highly accurate medical verification AI. 
     You are looking at an image of a medication. 
