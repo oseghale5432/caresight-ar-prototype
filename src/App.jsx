@@ -282,13 +282,34 @@ function App() {
         ]
       };
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      const data = await response.json();
+      const tryFetch = async (modelName) => {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        
+        if (data.error && data.error.message.toLowerCase().includes('high demand')) {
+          throw new Error('HIGH_DEMAND');
+        }
+        if (data.error) {
+          throw new Error(data.error.message);
+        }
+        return data;
+      };
+
+      let data;
+      try {
+        data = await tryFetch('gemini-flash-latest');
+      } catch (err) {
+        if (err.message === 'HIGH_DEMAND') {
+          console.warn("Flash model overloaded. Falling back to Pro model cluster...");
+          data = await tryFetch('gemini-pro-latest');
+        } else {
+          throw err;
+        }
+      }
       setLoading(false);
       setIsSpeaking(false);
       
